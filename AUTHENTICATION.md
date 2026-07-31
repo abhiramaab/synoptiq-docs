@@ -37,22 +37,21 @@ OAuth **never** runs on the frontend domain. The login button sends the browser 
 sequenceDiagram
     autonumber
     actor User
-    participant FE as Frontend<br/>usesynoptiq.com
-    participant API as Backend API<br/>api.abhiram.tech
+    participant FE as usesynoptiq.com
+    participant API as api.abhiram.tech
     participant Google as Google OAuth
 
-    User->>FE: Open /login, click "Sign in with Google"
-    Note over FE: LoginCard.jsx sets<br/>window.location.href
-    FE->>API: Browser navigates to<br/>GET /oauth2/authorization/google
-    API->>Google: 302 redirect to consent screen<br/>(openid, Gmail, Calendar scopes)
-    User->>Google: Approve access
-    Google->>API: Browser redirected to<br/>GET /login/oauth2/code/google?code=...
-    Note over API: CustomOidcUserService — create/update User<br/>GoogleOAuthTokenService — save gmail_tokens<br/>JwtService — issue JWT
-    API->>FE: 302 redirect to<br/>/oauth-success?token=&lt;JWT&gt;
-    Note over FE: OAuthSuccess.jsx — store token in localStorage
-    FE->>FE: Full page load → /brief
-    FE->>API: GET /api/users/me<br/>Authorization: Bearer &lt;JWT&gt;
-    API-->>FE: User profile
+    User->>FE: Open login page and click Sign in
+    FE->>API: GET /oauth2/authorization/google
+    API->>Google: Redirect to Google consent screen
+    User->>Google: Approve Gmail and Calendar access
+    Google->>API: GET /login/oauth2/code/google with auth code
+    Note over API: Create or update user, save gmail_tokens, issue JWT
+    API->>FE: Redirect to /oauth-success?token=JWT
+    Note over FE: OAuthSuccess saves JWT to localStorage
+    FE->>FE: Full page reload to /brief
+    FE->>API: GET /api/users/me with Authorization Bearer JWT
+    API-->>FE: Return user profile
 ```
 
 ### Step-by-step
