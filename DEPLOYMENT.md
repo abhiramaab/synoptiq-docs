@@ -6,11 +6,35 @@ High-level production architecture for Synoptiq. **No credentials, secrets, or s
 
 ## Production URLs
 
-| Service | URL |
-|---------|-----|
-| Frontend | https://synoptiq.abhiram.tech |
-| API | https://api.abhiram.tech |
-| API docs (Swagger) | https://api.abhiram.tech/swagger-ui/index.html |
+| Service | URL | Hosting |
+|---------|-----|---------|
+| **Frontend** | https://usesynoptiq.com | Vercel |
+| **Frontend (www)** | https://www.usesynoptiq.com | Vercel |
+| **API** | https://api.abhiram.tech | AWS EC2 + Docker |
+| **API docs (Swagger)** | https://api.abhiram.tech/swagger-ui/index.html | EC2 |
+
+---
+
+## Domain Architecture
+
+```
+usesynoptiq.com  ──►  Vercel (React static build)
+www.usesynoptiq.com ──►  Vercel
+
+api.abhiram.tech ──►  EC2 (Spring Boot API, port 8080 behind Nginx)
+```
+
+> **Critical:** `usesynoptiq.com` must point to **Vercel**, not the EC2 API server.  
+> If the frontend domain points at the API IP, users get SSL errors (`api.abhiram.tech` certificate on `usesynoptiq.com`) and OAuth `redirect_uri_mismatch`.
+
+### DNS (Hostinger → Vercel)
+
+| Type | Name | Value |
+|------|------|-------|
+| CNAME or A | `@` | Vercel-provided records (from Vercel → Domains) |
+| CNAME | `www` | `cname.vercel-dns.com` (or Vercel alias) |
+
+Do **not** add an A record for `usesynoptiq.com` pointing at the EC2 API IP (`13.200.154.148`). That IP is only for `api.abhiram.tech`.
 
 ---
 
@@ -18,22 +42,22 @@ High-level production architecture for Synoptiq. **No credentials, secrets, or s
 
 ```
                     ┌─────────────────┐
-   Users ──────────►│  HTTPS / CDN    │
-                    │  (reverse proxy)│
+   Users ──────────►│  Vercel CDN     │  usesynoptiq.com
                     └────────┬────────┘
                              │
               ┌──────────────┼──────────────┐
               ▼                             ▼
     ┌─────────────────┐           ┌─────────────────┐
-    │  Static Frontend │           │  Docker Container│
-    │  (React build)   │           │  Spring Boot API │
-    └─────────────────┘           └────────┬────────┘
-                                           │
-                                           ▼
-                                  ┌─────────────────┐
-                                  │  PostgreSQL     │
-                                  │  (Neon cloud)   │
-                                  └─────────────────┘
+    │  React Frontend  │           │  Nginx + Docker │
+    │  (Vercel build)  │  REST/JWT │  Spring Boot API │
+    └─────────────────┘           │  api.abhiram.tech│
+                                    └────────┬────────┘
+                                             │
+                                             ▼
+                                    ┌─────────────────┐
+                                    │  PostgreSQL     │
+                                    │  (Neon cloud)   │
+                                    └─────────────────┘
 ```
 
 ---
@@ -42,13 +66,14 @@ High-level production architecture for Synoptiq. **No credentials, secrets, or s
 
 ### Backend
 - **Runtime:** Java 21, Spring Boot 3.5
-- **Container:** Docker image built from multi-stage Dockerfile
+- **Container:** Docker image built from Dockerfile
 - **Host:** AWS EC2 instance
-- **Process:** `java -jar synoptiq.jar` on port 8080 behind reverse proxy
+- **Process:** `java -jar` on port 8080 behind Nginx reverse proxy
 
 ### Frontend
-- **Build:** `yarn build` → static files in `build/`
-- **Serve:** Static hosting (Nginx or equivalent) at `synoptiq.abhiram.tech`
+- **Build:** `npm run build` → static files in `build/`
+- **Host:** Vercel (auto-deploy from GitHub `main`)
+- **Custom domain:** `usesynoptiq.com`
 
 ### Database
 - **Engine:** PostgreSQL
@@ -65,31 +90,54 @@ High-level production architecture for Synoptiq. **No credentials, secrets, or s
 
 ## Environment Variables (names only)
 
-These are configured on the server — **never committed to git:**
+### Backend (EC2 / Docker)
 
-| Variable | Purpose |
-|----------|---------|
-| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | PostgreSQL connection |
+| Variable | Production example |
+|----------|-------------------|
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | Neon PostgreSQL connection |
 | `JWT_SECRET` | JWT signing key |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OAuth |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | GitHub OAuth |
-| `GITHUB_OAUTH_REDIRECT_URI` | GitHub callback URL |
+| `GITHUB_OAUTH_REDIRECT_URI` | `https://api.abhiram.tech/api/github/oauth/callback` |
 | `OPENAI_API_KEY` | Completions API |
-| `FRONTEND_URL` | OAuth redirect target |
+| **`FRONTEND_URL`** | **`https://usesynoptiq.com`** |
 | `APP_ENCRYPTION_KEY` | Encrypt GitHub tokens at rest |
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | Payment processing |
-| `DDL_AUTO` | Hibernate schema mode (`validate` in production) |
+| `DDL_AUTO` | `validate` in production |
+
+### Frontend (Vercel)
+
+| Variable | Production value |
+|----------|------------------|
+| `REACT_APP_BACKEND_URL` | `https://api.abhiram.tech/api` |
+| `REACT_APP_BACKEND_BASE_URL` | `https://api.abhiram.tech` |
 
 ---
 
-## Deployment Flow (summary)
+## Deployment Flow
 
-1. Pull latest code on server (private repo)
-2. Build Docker image: `./mvnw clean package -DskipTests`
-3. Run database migrations if schema changed
-4. `docker compose up -d --build`
-5. Verify health: `GET /actuator/health`
-6. Frontend: rebuild static assets and deploy to static host
+### Backend (EC2)
+
+```bash
+cd ~/synoptiq
+git pull origin main
+# Run migrations if schema changed (see DATABASE.md)
+docker compose up -d --build
+```
+
+### Frontend (Vercel)
+
+Push to `main` on `github.com/abhiramaab/synoptiq-frontend` → Vercel auto-builds and deploys.
+
+Manual redeploy: Vercel dashboard → Deployments → Redeploy (must be a commit that still exists on `main`).
+
+### Database migrations
+
+Before restarting backend with new agent tables:
+
+```bash
+psql "$DB_URL" -f scripts/migrate-agent-platform.sql
+```
 
 ---
 
@@ -99,8 +147,9 @@ These are configured on the server — **never committed to git:**
 - `DDL_AUTO=validate` in production
 - GitHub OAuth tokens encrypted before database storage
 - JWT with 24-hour expiry
-- CORS restricted to known frontend origins
+- CORS restricted to `usesynoptiq.com`, `synoptiq.abhiram.tech`, Vercel previews
 - HTTPS enforced on all public endpoints
+- Frontend and API on separate domains with correct SSL certificates
 
 ---
 
@@ -108,6 +157,7 @@ These are configured on the server — **never committed to git:**
 
 - Spring Actuator: `/actuator/health`
 - Scheduled jobs: Gmail sync (5 min), daily summaries (10:00 AM)
+- Vercel: deployment status and build logs in dashboard
 
 ---
 

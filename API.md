@@ -55,10 +55,12 @@ Authorization: Bearer <jwt_token>
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/calendar/status` | Connection status + today's count |
+| GET | `/calendar/status` | Connection status + `upcomingToday`, `meetingsThisWeek`, `upcomingNext7Days` |
 | GET | `/calendar/events/today` | Today's calendar events |
+| GET | `/calendar/events/upcoming?days=14` | Upcoming events (1–30 day window, default 14) |
 | GET | `/calendar/search?q=` | Search events by query |
 | GET | `/calendar/summary/today` | AI summary of today's meetings |
+| POST | `/calendar/events/create` | Create event from natural-language prompt (`{ "prompt": "..." }`) |
 
 ---
 
@@ -85,13 +87,26 @@ Authorization: Bearer <jwt_token>
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/chat` | Send message, get AI response |
-| GET | `/chat/history` | Message history |
-| GET | `/chat/conversations` | List conversations |
+| POST | `/chat` | Send message, get AI response (primary path used by frontend) |
+| POST | `/chat/stream` | Same as `/chat` but returns Server-Sent Events (`text/event-stream`) |
+| GET | `/chat/history` | Message history (`?conversationId=` optional) |
+| GET | `/chat/conversations` | List conversations (`?search=` optional) |
 | POST | `/chat/conversations` | Create conversation |
 | PATCH | `/chat/conversations/{id}` | Rename conversation |
 | PATCH | `/chat/conversations/{id}/pin` | Pin/unpin |
 | DELETE | `/chat/conversations/{id}` | Delete conversation |
+
+**Chat request body:**
+
+```json
+{
+  "message": "how many commits in the last 2 days?",
+  "conversationId": 123,
+  "model": "GPT_4_1_MINI"
+}
+```
+
+The `model` field accepts internal enum names; the backend maps them to OpenAI API slugs via `AiModel.openAiApiId()`.
 
 ---
 
@@ -169,6 +184,8 @@ Authorization: Bearer <jwt_token>
 |--------|------|-------------|
 | GET | `/ai/models` | Available models for user plan |
 | PUT | `/ai/models/selected` | Set preferred model |
+
+Only **OpenAI** models are active in the production UI. Internal enum values (e.g. `GPT_4_1_MINI`) are mapped to API slugs (`gpt-4.1-mini`) before calling OpenAI. Gemini and Grok appear as "coming soon".
 
 ---
 

@@ -40,7 +40,7 @@ Authorization: Bearer <jwt>
     │                      │                     │  Create/update User
     │                      │                     │  Save gmail_tokens
     │                      │                     │  Issue JWT
-    │  Redirect FRONTEND_URL/oauth-success?token=JWT                 │
+    │  Redirect https://usesynoptiq.com/oauth-success?token=JWT          │
     │◄─────────────────────────────────────────│                    │
     │  Save token to localStorage              │                    │
     │  Redirect /dashboard                     │                    │
@@ -181,10 +181,11 @@ GitHub OAuth is **not** a login method — it links GitHub to an already-authent
 ### CORS allowed origins
 
 - `http://localhost:5173`, `http://localhost:3000`
-- `https://synoptiq.abhiram.tech`
+- `https://usesynoptiq.com`, `https://www.usesynoptiq.com`
+- `https://synoptiq.abhiram.tech`, `https://www.synoptiq.abhiram.tech`
 - `https://synoptiq.vercel.app`
 
-Configured in `SecurityConfig.java`.
+Configured in `SecurityConfig.java`. Production `FRONTEND_URL` on the backend should be `https://usesynoptiq.com`.
 
 ---
 
@@ -209,3 +210,5 @@ Configured in `SecurityConfig.java`.
 | Google login redirects but no Gmail sync | User denied scopes; re-login with consent |
 | Calendar "not connected" | `calendar.readonly` scope missing; re-authorize Google |
 | GitHub callback error | `GITHUB_OAUTH_REDIRECT_URI` mismatch with GitHub app settings |
+| SSL error on `usesynoptiq.com` | Frontend domain pointing at API server IP instead of Vercel |
+| OAuth `redirect_uri_mismatch` | Login started on wrong host; must use `api.abhiram.tech/oauth2/authorization/google` |

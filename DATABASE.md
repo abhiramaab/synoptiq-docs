@@ -17,6 +17,8 @@ users ──┬── gmail_tokens (1:1)
         ├── github_daily_summaries (1:N)
         ├── daily_email_summaries (1:N)
         ├── conversation (1:N) ─── messages (1:N)
+        ├── agent_session_states (1:1 per conversation)
+        ├── semantic_memories (1:N)
         ├── compose_drafts (1:N) ─── compose_attachments (1:N)
         ├── reply_drafts (1:N) → emails
         ├── user_behavior_profiles (1:1)
@@ -131,6 +133,29 @@ Audit trail of executed searches with result counts.
 
 Chat messages linked to conversations (role: user/assistant, content, timestamps).
 
+### `agent_session_states`
+
+Per-conversation agent context for multi-turn tool use (agent platform).
+
+| Column | Notes |
+|--------|-------|
+| conversation_id | FK → conversation (unique) |
+| tool_context | Serialized tool state |
+| domains | Active integration domains |
+| updated_at | Last update timestamp |
+
+### `semantic_memories`
+
+Long-term user memories for the agent platform.
+
+| Column | Notes |
+|--------|-------|
+| user_id | FK → users |
+| content | Memory text |
+| embedding_json | Optional embedding vector (JSON) |
+| memory_type | Category label |
+| created_at | Timestamp |
+
 ---
 
 ## Behavior Tables
@@ -151,15 +176,17 @@ Individual sent-email samples used for learning.
 
 ## Migrations
 
-Production schema fixes and additions:
+Production schema scripts (run in private backend repo):
 
 ```
 scripts/fix-production-schema.sql
+scripts/migrate-agent-platform.sql   ← agent_session_states, semantic_memories
 ```
 
-Run against Neon when deploying schema changes:
+Run against Neon **before** deploying with `DDL_AUTO=validate`:
 
 ```bash
+psql "$DB_URL" -f scripts/migrate-agent-platform.sql
 psql "$DB_URL" -f scripts/fix-production-schema.sql
 ```
 

@@ -1,15 +1,16 @@
 # Synoptiq Documentation
 
-Public technical documentation for **[Synoptiq](https://synoptiq.abhiram.tech)** — a workflow automation platform that connects Gmail, Google Calendar, GitHub, and workspace search into one intelligent dashboard.
+Public technical documentation for **[Synoptiq](https://usesynoptiq.com)** — a workflow automation platform that connects Gmail, Google Calendar, GitHub, and workspace search into one intelligent dashboard.
 
 > **Note:** Application source code (backend + frontend) is maintained in **private repositories**.  
 > This public repo contains architecture and API documentation only — no secrets, no source code.
 
 | | |
 |---|---|
-| **Live application** | [synoptiq.abhiram.tech](https://synoptiq.abhiram.tech) |
+| **Live application** | [usesynoptiq.com](https://usesynoptiq.com) |
 | **API** | [api.abhiram.tech](https://api.abhiram.tech) |
 | **Swagger UI** | [api.abhiram.tech/swagger-ui](https://api.abhiram.tech/swagger-ui/index.html) |
+| **Docs repo** | [github.com/abhiramaab/synoptiq-docs](https://github.com/abhiramaab/synoptiq-docs) |
 | **Author** | [Abhirama B](https://github.com/abhiramaab) |
 | **Contact** | abhiram.b@icloud.com |
 
@@ -20,14 +21,30 @@ Public technical documentation for **[Synoptiq](https://synoptiq.abhiram.tech)**
 Synoptiq helps professionals automate inbox and developer workflows:
 
 - **Google OAuth2** sign-in with JWT sessions
-- **Gmail** — sync, search, summarization, watchlists, notifications
-- **Google Calendar** — today's events, search, daily summaries
-- **GitHub** — OAuth linking, repo tracking, commits, PRs, dev summaries
+- **Gmail** — sync, search, summarization, watchlists, notifications, attachment downloads
+- **Google Calendar** — today's events, upcoming schedule, search, create events from chat, daily summaries
+- **GitHub** — OAuth linking, repo tracking, commits, PRs, natural-language counts and date-range queries
 - **Crawls** — unified natural-language search across email, attachments, GitHub, and calendar
 - **Daily Brief** — morning overview of inbox, meetings, and GitHub activity
-- **AI Workspace** — conversational assistant with intent routing
+- **AI Workspace** — conversational assistant with intent routing, agent tools, and fast structured replies
 - **Reply & compose drafts** — generated emails with approval workflow
 - **Subscriptions** — Edge & Pinnacle plans via Razorpay
+
+---
+
+## Recent Updates (July 2026)
+
+| Area | What shipped |
+|------|----------------|
+| **Domain** | Production frontend moved to `usesynoptiq.com` (Vercel); API remains `api.abhiram.tech` (EC2) |
+| **Agent platform** | `chat/agent/*` — router, planner, parallel tool executor, memory, response cache |
+| **Fast chat** | Structured intents skip LLM; greetings instant; tool results returned directly when possible |
+| **Calendar** | `GET /calendar/events/upcoming`, `POST /calendar/events/create`, extended `/calendar/status` |
+| **GitHub chat** | `GithubQueryParser` for counts and date ranges; parallel repo fetch with 2-min cache |
+| **Automations UI** | Live connect-state toolbars; real calendar upcoming events (no static placeholders) |
+| **Legal pages** | Updated Privacy Policy and Terms of Service (July 31, 2026) |
+| **AI models** | OpenAI enum → API slug mapping (`GPT_4_1_MINI` → `gpt-4.1-mini`) |
+| **Database** | `agent_session_states`, `semantic_memories` tables for agent platform |
 
 ---
 
@@ -39,7 +56,7 @@ Synoptiq helps professionals automate inbox and developer workflows:
 | **Frontend** | React 18, React Router 7, TanStack Query, Tailwind CSS, shadcn/ui |
 | **Auth** | JWT, Google OAuth2, GitHub OAuth |
 | **Integrations** | Gmail API, Google Calendar API, GitHub REST API |
-| **Deploy** | Docker, AWS EC2, Neon PostgreSQL |
+| **Deploy** | Docker (EC2 API), Vercel (frontend), Neon PostgreSQL |
 
 ---
 
@@ -48,12 +65,13 @@ Synoptiq helps professionals automate inbox and developer workflows:
 | Document | Description |
 |----------|-------------|
 | [Overview](./OVERVIEW.md) | One-page summary for recruiters and quick onboarding |
-| [Architecture](./ARCHITECTURE.md) | System design, modules, schedulers, integrations |
+| [Architecture](./ARCHITECTURE.md) | System design, agent platform, chat routing, integrations |
 | [API Reference](./API.md) | REST endpoints grouped by domain |
 | [Authentication](./AUTHENTICATION.md) | JWT, Google OAuth, GitHub OAuth flows |
 | [Database](./DATABASE.md) | Entity relationships and schema overview |
-| [Frontend](./FRONTEND.md) | React app structure, routing, services |
-| [Deployment](./DEPLOYMENT.md) | High-level production architecture (no secrets) |
+| [Frontend](./FRONTEND.md) | React app structure, automations UI, workspace chat |
+| [Deployment](./DEPLOYMENT.md) | Production architecture and domain setup (no secrets) |
+| [Sync guide](./SYNC.md) | How to keep this repo aligned with private backend docs |
 
 ---
 
@@ -62,7 +80,8 @@ Synoptiq helps professionals automate inbox and developer workflows:
 ```
 ┌─────────────────────┐         HTTPS / REST          ┌──────────────────────────┐
 │  React Frontend     │  ◄──────────────────────────► │  Spring Boot API         │
-│  (CRA + Tailwind)   │      JWT Bearer Auth          │  Java 21                 │
+│  usesynoptiq.com    │      JWT Bearer Auth          │  api.abhiram.tech        │
+│  (Vercel)           │                               │  (EC2 + Docker)          │
 └─────────────────────┘                               └────────────┬─────────────┘
                                                                    │
                     ┌──────────────────────────────────────────────┼──────────────┐

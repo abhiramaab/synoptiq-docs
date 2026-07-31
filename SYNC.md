@@ -1,6 +1,6 @@
 # Keeping Docs in Sync
 
-When you update documentation in your **private backend repo** (`synoptiq-main/docs/`), copy changes to this public repo:
+When you update documentation in your **private backend repo** (`synoptiq-main/docs/`), copy matching sections to this public repo:
 
 ```bash
 # From your machine
@@ -16,10 +16,17 @@ git push
 ```
 
 **Files unique to this public repo** (edit here directly):
-- `README.md`
-- `OVERVIEW.md`
-- `DEPLOYMENT.md` (sanitized — no secrets)
-- `FRONTEND.md`
+- `README.md` — landing page, links, feature list, recent updates
+- `OVERVIEW.md` — recruiter-friendly summary
+- `DEPLOYMENT.md` — production overview, domain/DNS setup (no secrets)
+- `FRONTEND.md` — React app architecture, Vercel, automations UI
+- `SYNC.md` — this file
+
+**Sections that change frequently** (update in both repos when shipping features):
+- Chat / agent platform (`ARCHITECTURE.md`)
+- New REST endpoints (`API.md`)
+- New database tables (`DATABASE.md`)
+- Domain or deployment changes (`DEPLOYMENT.md`, `FRONTEND.md`)
 
 **Never copy to public repo:**
 - `.env`, `application.properties` with real values
