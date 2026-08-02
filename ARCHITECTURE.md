@@ -16,33 +16,48 @@ Synoptiq is a **modular monolith**: a single Spring Boot application with clearl
 
 ## High-Level Component Diagram
 
+Synoptiq is a single Spring Boot deployable. Domain code lives in package modules; integrations and persistence sit below the service layer. The React app and third-party APIs connect from outside the monolith.
+
+```mermaid
+flowchart TB
+    FE["React Frontend"]
+
+    subgraph Monolith["SYNOPTIQ BACKEND — Monolith"]
+        direction TB
+
+        subgraph Modules["Domain modules"]
+            direction LR
+            M1["auth/ · user/"]
+            M2["chat/ · chat/agent/ · compose/"]
+            M3["email/ · search/"]
+            M4["behavior/ · payment/"]
+        end
+
+        SL["Service Layer"]
+        INT["integration/gmail · calendar · github · ai/"]
+        JPA["JPA Repos"]
+        DB[("PostgreSQL")]
+
+        Modules --> SL
+        SL --> INT
+        SL --> JPA
+        JPA <--> DB
+    end
+
+    Google["Google APIs"]
+    GH["GitHub API"]
+
+    FE -->|"REST + JWT"| SL
+    INT --> Google
+    INT --> GH
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           SYNOPTIQ BACKEND (Monolith)                        │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────────────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │   auth/     │  │   chat/ + chat/agent/       │  │   email/    │  │   behavior/         │ │
-│  │   user/     │  │   compose/                  │  │   search/   │  │   payment/          │ │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘ │
-│         │                │                │                     │            │
-│  ┌──────┴────────────────┴────────────────┴─────────────────────┴──────────┐ │
-│  │                        Service Layer                                     │ │
-│  └──────┬───────────────────────────────────────────────────────────────────┘ │
-│         │                                                                      │
-│  ┌──────┴───────────────────────────────────────────────────────────────────┐ │
-│  │  integration/gmail · integration/calendar · integration/github · ai/     │ │
-│  └──────┬───────────────────────────────────────────────────────────────────┘ │
-│         │                                                                      │
-│  ┌──────┴──────┐                    ┌──────────────┐                          │
-│  │  JPA Repos  │◄──────────────────►│  PostgreSQL  │                          │
-│  └─────────────┘                    └──────────────┘                          │
-└─────────────────────────────────────────────────────────────────────────────┘
-         ▲                              ▲                    ▲
-         │ REST + JWT                   │                    │
-┌────────┴────────┐            ┌────────┴────────┐  ┌───────┴────────┐
-│ React Frontend  │            │  Google APIs    │  │  GitHub API    │
-└─────────────────┘            └─────────────────┘  └────────────────┘
-```
+
+| Layer | Packages | Role |
+|-------|----------|------|
+| **Domain modules** | `auth`, `user`, `chat`, `email`, `search`, `behavior`, `payment`, `compose` | REST controllers and domain services |
+| **Service layer** | Shared business logic across modules | Orchestration, validation, user scoping |
+| **Integration layer** | `integration/gmail`, `integration/calendar`, `integration/github`, `ai/` | External API clients and AI completions |
+| **Data layer** | JPA repositories + PostgreSQL | Persistence for users, emails, tokens, conversations |
 
 ---
 
