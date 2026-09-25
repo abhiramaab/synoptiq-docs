@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Synoptiq">
+  <defs>
+    <linearGradient id="synoptiq-grad" x1="96" y1="96" x2="416" y2="416" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="#050505"/>
+  <circle cx="256" cy="256" r="168" fill="url(#synoptiq-grad)"/>
+  <path
+    fill="#ffffff"
+    d="M256 156c-4 0-7 3-7 7v69l-62-36a7 7 0 0 0-9.5 2.5 7 7 0 0 0 2.5 9.5l62 36-62 36a7 7 0 1 0 7 12.1l62-36v69a7 7 0 0 0 14 0v-69l62 36a7 7 0 1 0 7-12.1l-62-36 62-36a7 7 0 1 0-7-12.1l-62 36v-69c0-4-3-7-7-7z"
+  />
+</svg>
