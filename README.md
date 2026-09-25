@@ -52,7 +52,6 @@
 - [Technology Stack](#technology-stack)
 - [API Reference Summary](#api-reference-summary)
 - [Production Deployment Topology](#production-deployment-topology)
-- [Source Code & Access](#source-code--access)
 
 </details>
 
@@ -221,18 +220,4 @@ Detailed engineering documentation is organized into domain-specific guides:
                                                 └──────────────────────┘
 ```
 
----
 
-## Source Code & Access
-
-Application source repositories for both backend and frontend are maintained as private codebases. For architecture walkthroughs, technical evaluations, or engineering inquiries, contact:
-
-* **Author**: [Abhirama B](https://github.com/abhiramaab)
-* **Portfolio**: [portfolio.abhiram.tech](https://portfolio.abhiram.tech)
-* **Email**: abhiram.b@icloud.com
-
----
-
-<p align="center">
-  Built by <a href="https://github.com/abhiramaab">Abhirama</a> · Live at <a href="https://portfolio.abhiram.tech">portfolio.abhiram.tech</a>
-</p>
